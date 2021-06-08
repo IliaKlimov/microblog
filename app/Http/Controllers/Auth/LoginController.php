@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers\Auth;
 
-use App\Traits\Auth\LoginUser;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Http\Request;
@@ -11,7 +10,6 @@ use Illuminate\Support\Facades\Validator;
 
 class LoginController extends Controller
 {
-    use LoginUser;
 
     protected $redirectTo = '/';
 
@@ -45,6 +43,35 @@ class LoginController extends Controller
         $request->session()->regenerateToken();
         return redirect('/');
     }
+
+    public function login(Request $request)
+    {
+        $this->validator($request->all())->validate();
+
+        if ($this->attemptLogin($request)) {
+            return redirect($this->redirectTo);
+        }
+        return redirect()->back()->withErrors(['password' => 'The provided credentials do not match our records.']);
+    }
+
+    protected function attemptLogin(Request $request)
+    {
+        if ($request['phone']
+            && Auth::attempt([
+                'phone' => $request['phone'],
+                'password' => $request['password']
+            ],$request->has('remember'))
+            || $request['email']
+            && Auth::attempt([
+                'email' => $request['email'],
+                'password' => $request['password']
+            ],$request->has('remember'))){
+            return true;
+        }
+        return false;
+    }
+
+
 
     public function __construct()
     {
